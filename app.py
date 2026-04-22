@@ -258,10 +258,28 @@ st.markdown("""
 # ================================
 @st.cache_resource
 def load_model():
-    with open('data/cricket_model.pkl', 'rb') as f:
-        model = pickle.load(f)
-    with open('data/label_encoder.pkl', 'rb') as f:
-        le = pickle.load(f)
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import LabelEncoder
+
+    df_train = pd.read_csv('data/cricket_players.csv')
+
+    def categorize(avg):
+        if avg >= 40: return 'Elite'
+        elif avg >= 32: return 'Good'
+        else: return 'Average'
+
+    df_train['performance'] = df_train['avg'].apply(categorize)
+
+    features = ['matches', 'innings', 'runs', 'strike_rate',
+                'hundreds', 'fifties', 'highest_score', 'fours',
+                'sixes', 'not_outs']
+
+    X = df_train[features]
+    le = LabelEncoder()
+    y = le.fit_transform(df_train['performance'])
+
+    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+    model.fit(X, y)
     return model, le
 
 @st.cache_data
